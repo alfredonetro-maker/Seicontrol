@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1045925450586",
+    "project_id": "seicontrol",
+    "storage_bucket": "seicontrol.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1045925450586:android:5438ef3313681c35425963",
+        "android_client_info": {
+          "package_name": "com.example.seicontrol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBE5yDHmZxzhCWnIRlw6sDje3R9ebkQLYU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
