@@ -24,6 +24,23 @@ class _DataListPageState extends State<DataListPage> {
   // Cambios locales optimistas: serial -> Equipment actualizado
   final Map<String, Equipment> _localOverrides = {};
 
+  // ─── Header hide-on-scroll ───────────────────────────────────────────────
+  final ScrollController _scrollCtrl = ScrollController();
+  bool _headerVisible = true;
+  double _lastOffset = 0;
+
+  void _onScroll() {
+    final offset = _scrollCtrl.offset;
+    final delta = offset - _lastOffset;
+    _lastOffset = offset;
+    // Hide when scrolling down > small threshold; show when scrolling up
+    if (delta > 4 && _headerVisible) {
+      setState(() => _headerVisible = false);
+    } else if (delta < -4 && !_headerVisible) {
+      setState(() => _headerVisible = true);
+    }
+  }
+
   void _reload() {
     final newFuture = _service.load();
     setState(() {
@@ -37,19 +54,15 @@ class _DataListPageState extends State<DataListPage> {
     _station = widget.initialStation ?? '';
     _future = _service.load();
     _search.addListener(() => setState(() {}));
+    _scrollCtrl.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _search.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
-
-  // ─── Estimated header height so the SliverAppBar collapses fully ────────
-  // The header has: back+title+refresh (~80), filter chips (~56), search (~62),
-  // dropdown (~62), optional station chips (~84), plus paddings.
-  // We over-estimate so it always fully collapses on any screen.
-  static const double _headerExpandedHeight = 450;
 
   List<Equipment> _filterRows(List<Equipment> rows) {
     final q = _search.text.trim().toUpperCase();
@@ -375,81 +388,75 @@ class _DataListPageState extends State<DataListPage> {
             ),
           );
 
-          // Compute actual header height dynamically
-          final hasStations = stations.isNotEmpty;
-          final expandedHeight = hasStations
-              ? _headerExpandedHeight
-              : _headerExpandedHeight - 84;
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              _reload();
-              await _future;
-            },
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                // ── Collapsible header ──────────────────────────────────
-                SliverAppBar(
-                  automaticallyImplyLeading: false,
-                  backgroundColor: Colors.white,
-                  surfaceTintColor: Colors.transparent,
-                  shadowColor: _line,
-                  elevation: 0,
-                  expandedHeight: expandedHeight,
-                  collapsedHeight: 0,
-                  toolbarHeight: 0,
-                  floating: true,
-                  snap: true,
-                  pinned: false,
-                  flexibleSpace: FlexibleSpaceBar(
-                    collapseMode: CollapseMode.pin,
-                    background: headerWidget,
+          return Column(
+            children: [
+              // ── Collapsible header con slide + fade ─────────────────────
+              ClipRect(
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  alignment: Alignment.topCenter,
+                  heightFactor: _headerVisible ? 1.0 : 0.0,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: _headerVisible ? 1.0 : 0.0,
+                    child: headerWidget,
                   ),
                 ),
-                // ── List ─────────────────────────────────────────────────
-                if (rows.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Text(
-                        'No hay equipos para estos filtros.',
-                        style: TextStyle(color: _muted),
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    sliver: SliverList.builder(
-                      itemCount: rows.length,
-                      itemBuilder: (context, index) {
-                        final equipment = rows[index];
-                        return Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            compact ? 20 : 38,
-                            0,
-                            compact ? 20 : 38,
-                            13,
-                          ),
-                          child: _EquipmentCard(
-                            equipment,
-                            onUpdated: (updated) {
-                              if (updated != null) {
-                                setState(() {
-                                  _localOverrides[
-                                    updated.serial.trim().toUpperCase()
-                                  ] = updated;
-                                });
-                              }
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            ),
+              ),
+              // ── List ────────────────────────────────────────────────────
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    _reload();
+                    await _future;
+                  },
+                  child: rows.isEmpty
+                      ? ListView(
+                          controller: _scrollCtrl,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 80),
+                            Center(
+                              child: Text(
+                                'No hay equipos para estos filtros.',
+                                style: TextStyle(color: _muted),
+                              ),
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          controller: _scrollCtrl,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(bottom: 24),
+                          itemCount: rows.length,
+                          itemBuilder: (context, index) {
+                            final equipment = rows[index];
+                            return Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                compact ? 20 : 38,
+                                0,
+                                compact ? 20 : 38,
+                                13,
+                              ),
+                              child: _EquipmentCard(
+                                equipment,
+                                onUpdated: (updated) {
+                                  if (updated != null) {
+                                    setState(() {
+                                      _localOverrides[
+                                        updated.serial.trim().toUpperCase()
+                                      ] = updated;
+                                    });
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ],
           );
         },
       ),
