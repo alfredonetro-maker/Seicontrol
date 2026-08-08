@@ -510,24 +510,27 @@ class Home extends StatelessWidget {
         ];
 
         if (compact) {
-          return SingleChildScrollView(
-            padding: padding,
+          return Padding(
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Header(),
-                const SizedBox(height: 46),
+                const SizedBox(height: 14),
                 const _HomeTitle(),
-                const SizedBox(height: 28),
-                GridView.count(
-                  crossAxisCount: 1,
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 20,
-                  childAspectRatio: 1.16,
-                  children: modules,
+                const SizedBox(height: 12),
+                Expanded(
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.95,
+                    children: modules,
+                  ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
+                const _HomeStationSearch(),
               ],
             ),
           );
@@ -683,10 +686,17 @@ class _HomeTitle extends StatelessWidget {
   const _HomeTitle();
 
   @override
-  Widget build(BuildContext c) => const Text(
-    'Levantamiento físico y ubicación de:',
-    style: TextStyle(color: navy, fontWeight: FontWeight.w800, fontSize: 32),
-  );
+  Widget build(BuildContext c) {
+    final compact = MediaQuery.sizeOf(c).width < 600;
+    return Text(
+      'Levantamiento físico y ubicación de:',
+      style: TextStyle(
+        color: navy,
+        fontWeight: FontWeight.w800,
+        fontSize: compact ? 20 : 32,
+      ),
+    );
+  }
 }
 
 class Module extends StatelessWidget {
@@ -699,43 +709,43 @@ class Module extends StatelessWidget {
     _ => 'assets/images/vrv.png',
   };
   @override
-  Widget build(BuildContext c) => InkWell(
-    onTap: () => Navigator.push(
-      c,
-      MaterialPageRoute(builder: (_) => DataListPage(type)),
-    ),
-    borderRadius: BorderRadius.circular(28),
-    child: Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: line),
-        borderRadius: BorderRadius.circular(28),
+  Widget build(BuildContext c) {
+    final compact = MediaQuery.sizeOf(c).width < 600;
+    return InkWell(
+      onTap: () => Navigator.push(
+        c,
+        MaterialPageRoute(builder: (_) => DataListPage(type)),
       ),
-      child: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 300),
+      borderRadius: BorderRadius.circular(compact ? 20 : 28),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: line),
+          borderRadius: BorderRadius.circular(compact ? 20 : 28),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(compact ? 8 : 14),
+                child: Center(
                   child: Image.asset(image, fit: BoxFit.contain),
                 ),
               ),
             ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              color: navy,
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
+            Text(
+              label,
+              style: TextStyle(
+                color: navy,
+                fontSize: compact ? 22 : 32,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-        ],
+            SizedBox(height: compact ? 10 : 16),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class Mechanic extends MechanicSectorsPage {
