@@ -45,6 +45,12 @@ class _DataListPageState extends State<DataListPage> {
     super.dispose();
   }
 
+  // ─── Estimated header height so the SliverAppBar collapses fully ────────
+  // The header has: back+title+refresh (~80), filter chips (~56), search (~62),
+  // dropdown (~62), optional station chips (~84), plus paddings.
+  // We over-estimate so it always fully collapses on any screen.
+  static const double _headerExpandedHeight = 450;
+
   List<Equipment> _filterRows(List<Equipment> rows) {
     final q = _search.text.trim().toUpperCase();
     final isAllTypes =
@@ -131,276 +137,303 @@ class _DataListPageState extends State<DataListPage> {
                        .toSet()
                        .toList()
                      ..sort();
-          return Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  compact ? 20 : 38,
-                  28,
-                  compact ? 20 : 38,
-                  0,
-                ),
-                child: Column(
+          final headerWidget = Padding(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 20 : 38,
+              28,
+              compact ? 20 : 38,
+              16,
+            ),
+            child: Column(
+              children: [
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Stack(
-                      alignment: Alignment.center,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back, color: _blue),
+                        style: IconButton.styleFrom(
+                          side: const BorderSide(color: _line),
+                        ),
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.arrow_back, color: _blue),
-                            style: IconButton.styleFrom(
-                              side: const BorderSide(color: _line),
-                            ),
+                        Text(
+                          titleText,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: _navy,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              titleText,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: _navy,
-                                fontSize: 34,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              sub,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: _muted,
-                                fontSize: 17,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            onPressed: _reload,
-                            tooltip: 'Actualizar datos',
-                            icon: const Icon(
-                              Icons.refresh_rounded,
-                              color: _blue,
-                            ),
-                            style: IconButton.styleFrom(
-                              side: const BorderSide(color: _line),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    // ─── 4 Botones de Filtro ─────────────────────────
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          'Todos',
-                          'Montados',
-                          'Disponibles',
-                          'Vencidos',
-                        ].map((f) {
-                          final selected = _filter == f;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(
-                                f.toUpperCase(),
-                                style: TextStyle(
-                                  color: selected ? Colors.white : _navy,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                  letterSpacing: .3,
-                                ),
-                              ),
-                              selected: selected,
-                              selectedColor: _blue,
-                              backgroundColor: const Color(0xfff0f4fb),
-                              showCheckmark: false,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                side: BorderSide(
-                                  color: selected ? _blue : _line,
-                                  width: 1.5,
-                                ),
-                              ),
-                              onSelected: (_) => setState(() => _filter = f),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _search,
-                      decoration: InputDecoration(
-                        hintText: 'Buscar por estación',
-                        hintStyle: const TextStyle(color: _muted, fontSize: 16),
-                        prefixIcon: const Icon(
-                          Icons.location_on_outlined,
-                          color: _blue,
-                          size: 24,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
-                            color: Color(0xff7c4dff),
-                            width: 1.8,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
-                            color: Color(0xff7c4dff),
-                            width: 1.8,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: _blue, width: 2),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey(_station),
-                      initialValue: _station.isEmpty ? null : _station,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.location_on_outlined,
-                          color: _blue,
-                          size: 24,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
-                            color: Color(0xff7c4dff),
-                            width: 1.8,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
-                            color: Color(0xff7c4dff),
-                            width: 1.8,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(color: _blue, width: 2),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                      ),
-                      hint: Text(
-                        stations.isEmpty
-                            ? 'No hay estaciones registradas'
-                            : 'Todas las estaciones (${stations.length})',
-                        style: const TextStyle(color: _muted, fontSize: 16),
-                      ),
-                      items: [
-                        const DropdownMenuItem(
-                          value: '',
-                          child: Text('Todas las estaciones'),
-                        ),
-                        ...stations.map(
-                          (s) => DropdownMenuItem(value: s, child: Text(s)),
-                        ),
-                      ],
-                      onChanged: (v) => setState(() => _station = v ?? ''),
-                    ),
-                    if (stations.isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Estaciones disponibles (${stations.length})',
+                        const SizedBox(height: 2),
+                        Text(
+                          sub,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: _muted,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        height: 42,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: stations.length,
-                          separatorBuilder: (_, index) =>
-                              const SizedBox(width: 8),
-                          itemBuilder: (_, index) {
-                            final station = stations[index];
-                            return ChoiceChip(
-                              label: Text(station),
-                              selected: _station == station,
-                              selectedColor: _blue,
-                              labelStyle: TextStyle(
-                                color: _station == station
-                                    ? Colors.white
-                                    : _muted,
-                              ),
-                              onSelected: (_) => setState(
-                                () => _station = _station == station
-                                    ? ''
-                                    : station,
-                              ),
-                            );
-                          },
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        onPressed: _reload,
+                        tooltip: 'Actualizar datos',
+                        icon: const Icon(
+                          Icons.refresh_rounded,
+                          color: _blue,
+                        ),
+                        style: IconButton.styleFrom(
+                          side: const BorderSide(color: _line),
                         ),
                       ),
-                    ],
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    _reload();
-                    await _future;
-                  },
-                  child: rows.isEmpty
-                      ? ListView(
-                          children: [
-                            const SizedBox(height: 100),
-                            const Center(
-                              child: Text(
-                                'No hay equipos para estos filtros.',
-                                style: TextStyle(color: _muted),
-                              ),
+                const SizedBox(height: 20),
+                // ─── 4 Botones de Filtro ─────────────────────────
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      'Todos',
+                      'Montados',
+                      'Disponibles',
+                      'Vencidos',
+                    ].map((f) {
+                      final selected = _filter == f;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(
+                            f.toUpperCase(),
+                            style: TextStyle(
+                              color: selected ? Colors.white : _navy,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              letterSpacing: .3,
                             ),
-                          ],
-                        )
-                      : ListView.separated(
+                          ),
+                          selected: selected,
+                          selectedColor: _blue,
+                          backgroundColor: const Color(0xfff0f4fb),
+                          showCheckmark: false,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: BorderSide(
+                              color: selected ? _blue : _line,
+                              width: 1.5,
+                            ),
+                          ),
+                          onSelected: (_) => setState(() => _filter = f),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _search,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por estación',
+                    hintStyle: const TextStyle(color: _muted, fontSize: 16),
+                    prefixIcon: const Icon(
+                      Icons.location_on_outlined,
+                      color: _blue,
+                      size: 24,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: const BorderSide(
+                        color: Color(0xff7c4dff),
+                        width: 1.8,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: const BorderSide(
+                        color: Color(0xff7c4dff),
+                        width: 1.8,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: const BorderSide(color: _blue, width: 2),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                DropdownButtonFormField<String>(
+                  key: ValueKey(_station),
+                  initialValue: _station.isEmpty ? null : _station,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      Icons.location_on_outlined,
+                      color: _blue,
+                      size: 24,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: const BorderSide(
+                        color: Color(0xff7c4dff),
+                        width: 1.8,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: const BorderSide(
+                        color: Color(0xff7c4dff),
+                        width: 1.8,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: const BorderSide(color: _blue, width: 2),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                  hint: Text(
+                    stations.isEmpty
+                        ? 'No hay estaciones registradas'
+                        : 'Todas las estaciones (${stations.length})',
+                    style: const TextStyle(color: _muted, fontSize: 16),
+                  ),
+                  items: [
+                    const DropdownMenuItem(
+                      value: '',
+                      child: Text('Todas las estaciones'),
+                    ),
+                    ...stations.map(
+                      (s) => DropdownMenuItem(value: s, child: Text(s)),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => _station = v ?? ''),
+                ),
+                if (stations.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Estaciones disponibles (${stations.length})',
+                      style: const TextStyle(
+                        color: _muted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 42,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: stations.length,
+                      separatorBuilder: (_, index) =>
+                          const SizedBox(width: 8),
+                      itemBuilder: (_, index) {
+                        final station = stations[index];
+                        return ChoiceChip(
+                          label: Text(station),
+                          selected: _station == station,
+                          selectedColor: _blue,
+                          labelStyle: TextStyle(
+                            color: _station == station
+                                ? Colors.white
+                                : _muted,
+                          ),
+                          onSelected: (_) => setState(
+                            () => _station = _station == station
+                                ? ''
+                                : station,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+
+          // Compute actual header height dynamically
+          final hasStations = stations.isNotEmpty;
+          final expandedHeight = hasStations
+              ? _headerExpandedHeight
+              : _headerExpandedHeight - 84;
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              _reload();
+              await _future;
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // ── Collapsible header ──────────────────────────────────
+                SliverAppBar(
+                  automaticallyImplyLeading: false,
+                  backgroundColor: Colors.white,
+                  surfaceTintColor: Colors.transparent,
+                  shadowColor: _line,
+                  elevation: 0,
+                  expandedHeight: expandedHeight,
+                  collapsedHeight: 0,
+                  toolbarHeight: 0,
+                  floating: true,
+                  snap: true,
+                  pinned: false,
+                  flexibleSpace: FlexibleSpaceBar(
+                    collapseMode: CollapseMode.pin,
+                    background: headerWidget,
+                  ),
+                ),
+                // ── List ─────────────────────────────────────────────────
+                if (rows.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Text(
+                        'No hay equipos para estos filtros.',
+                        style: TextStyle(color: _muted),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    sliver: SliverList.builder(
+                      itemCount: rows.length,
+                      itemBuilder: (context, index) {
+                        final equipment = rows[index];
+                        return Padding(
                           padding: EdgeInsets.fromLTRB(
                             compact ? 20 : 38,
                             0,
                             compact ? 20 : 38,
-                            22,
+                            13,
                           ),
-                          itemCount: rows.length,
-                          separatorBuilder: (_, i) =>
-                              const SizedBox(height: 13),
-                          itemBuilder: (_, i) => _EquipmentCard(
-                            rows[i],
+                          child: _EquipmentCard(
+                            equipment,
                             onUpdated: (updated) {
                               if (updated != null) {
                                 setState(() {
@@ -411,10 +444,12 @@ class _DataListPageState extends State<DataListPage> {
                               }
                             },
                           ),
-                        ),
-                ),
-              ),
-            ],
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
           );
         },
       ),

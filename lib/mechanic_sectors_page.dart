@@ -63,10 +63,7 @@ class _MechanicChanges {
 
   void mountDirectly(MechanicWell well, _EquipmentType type) {
     final key = _ComponentKey(well.sector, well.well, type);
-    _overrides[key] = componentOf(
-      well,
-      type,
-    ).copyWith(systemStatus: 'MONTADO');
+    _overrides[key] = componentOf(well, type).copyWith(systemStatus: 'MONTADO');
   }
 
   void mount(
@@ -106,7 +103,11 @@ class MechanicSectorsPage extends StatelessWidget {
                     MaterialPageRoute(builder: (_) => const Login()),
                     (_) => false,
                   ),
-                  icon: const Icon(Icons.logout_rounded, color: _blue, size: 24),
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    color: _blue,
+                    size: 24,
+                  ),
                   style: IconButton.styleFrom(
                     side: const BorderSide(color: _line),
                     padding: const EdgeInsets.all(12),
@@ -637,8 +638,8 @@ class _MechanicWellsPageState extends State<MechanicWellsPage> {
                       ),
                       sliver: SliverGrid(
                         delegate: SliverChildBuilderDelegate(
-                           (context, index) => _WellCard(
-                             wells[index],
+                          (context, index) => _WellCard(
+                            wells[index],
                             onEdit: _service.inventoryEditingConfigured
                                 ? () => _showWellEditor(sourceWells[index])
                                 : null,
@@ -759,10 +760,9 @@ class _MechanicWellsPageState extends State<MechanicWellsPage> {
     );
   }
 
-
-
-  void _showInventoryError(Object error) => ScaffoldMessenger.of(context)
-      .showSnackBar(SnackBar(content: Text('$error')));
+  void _showInventoryError(Object error) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text('$error')));
 }
 
 class _WellCard extends StatelessWidget {

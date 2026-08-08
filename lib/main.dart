@@ -511,22 +511,37 @@ class Home extends StatelessWidget {
 
         if (compact) {
           return Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Header(),
-                const SizedBox(height: 14),
-                const _HomeTitle(),
-                const SizedBox(height: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Header(),
+                    SizedBox(height: 14),
+                    _HomeTitle(),
+                    SizedBox(height: 12),
+                  ],
+                ),
                 Expanded(
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.95,
-                    children: modules,
+                  child: LayoutBuilder(
+                    builder: (_, gridConstraints) {
+                      // Use the actual available height for a perfect square-ish grid
+                      final availH = gridConstraints.maxHeight;
+                      final availW = gridConstraints.maxWidth;
+                      final cellW = (availW - 12) / 2;
+                      final cellH = (availH - 12) / 2;
+                      return GridView.count(
+                        crossAxisCount: 2,
+                        physics: const NeverScrollableScrollPhysics(),
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: cellW / cellH,
+                        children: modules,
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 12),
